@@ -1,41 +1,212 @@
-### Paynow Gateway
+---
 
-Paynow intergration with Frappe Framework
+# 💳 Payment Gateway (Paynow + EcoCash) – Frappe App
 
-### Installation
+A modular payment gateway system for **ERPNext/Frappe** supporting:
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+* 💵 Paynow (USD payments)
+* 🇿🇼 EcoCash / ZWG mobile money
+* 🧾 Payment Entry integration
+* 🧪 Test mode simulation (Paynow sandbox logic)
+* 🔴 Live production payments
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch develop
-bench install-app paynow_gateway
+---
+
+# 🚀 Features
+
+## 💳 Payment Processing
+
+* Create payments from **Sales Invoice**
+* Auto-generate **Payment Entry**
+* Support for USD and ZWG flows (separate rails)
+
+## 🧪 Test Mode Support
+
+* Paynow sandbox integration mode
+* Simulated responses using:
+
+  * Test EcoCash numbers
+  * Test tokens (cards / zimswitch)
+* No real money movement
+
+## 🔴 Live Mode
+
+* Real Paynow + EcoCash integrations
+* Real-time webhook confirmation
+* Production-grade transaction handling
+
+## 🔁 Webhook Handling
+
+* Automatic payment status updates
+* Invoice reconciliation
+* Failed / pending / success tracking
+
+---
+
+# 🧱 Architecture
+
+```
+Payment Gateway App
+│
+├── Settings
+│   ├── Paynow USD Settings
+│   ├── EcoCash ZWG Settings
+│   └── System Mode (Test / Live)
+│
+├── API Layer
+│   ├── Paynow Service
+│   ├── EcoCash Service
+│   └── Payment Router
+│
+├── UI Layer
+│   ├── Invoice Button ("Pay with EcoCash / Paynow")
+│   ├── Frappe Dialogs
+│
+└── Core Logic
+    ├── Payment Entry Creation
+    ├── Webhook Processor
+    └── Status Updater
 ```
 
-### Contributing
+---
 
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
+# ⚙️ Payment Flow
 
-```bash
-cd apps/paynow_gateway
-pre-commit install
+## 💵 USD (Paynow)
+
+```
+Invoice → Button Click → Dialog → Backend API → Paynow → Webhook → Payment Entry → Invoice Paid
 ```
 
-Pre-commit is configured to use the following tools for checking and formatting your code:
+---
 
-- ruff
-- eslint
-- prettier
-- pyupgrade
+## 🇿🇼 ZWG (EcoCash)
 
-### CI
+```
+Invoice → Button Click → Dialog → Backend API → EcoCash → Callback → Payment Entry → Invoice Paid
+```
 
-This app can use GitHub Actions for CI. The following workflows are configured:
+---
 
-- CI: Installs this app and runs unit tests on every push to `develop` branch.
-- Linters: Runs [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on every pull request.
+# 🧪 Test Mode (Paynow)
 
+When system is in TEST mode:
 
-### License
+### Mobile Money Test Numbers:
 
-mit
+| Scenario           | Number     |
+| ------------------ | ---------- |
+| Success            | 0771111111 |
+| Delayed Success    | 0772222222 |
+| Cancelled          | 0773333333 |
+| Insufficient Funds | 0774444444 |
+
+### Card / Token Testing:
+
+* Success token
+* Pending token
+* Failed token
+
+👉 No real money is processed.
+
+---
+
+# 🔐 Settings Structure
+
+## 🌐 System Mode
+
+* Test
+* Live
+
+---
+
+## 💵 Paynow USD Settings
+
+* Integration ID (Test & Live)
+* Integration Key (Test & Live)
+* Enabled
+
+---
+
+## 🇿🇼 EcoCash Settings
+
+* API Key (Test & Live)
+* API Secret (Test & Live)
+* Shortcode
+* Enabled
+
+---
+
+# 🧠 Design Principles
+
+* ❌ No sandbox/live UI buttons
+
+* ❌ No per-transaction environment switching
+
+* ❌ No mixing currencies in same flow
+
+* ✔ System-wide mode control
+
+* ✔ Backend decides everything
+
+* ✔ UI only triggers payment actions
+
+* ✔ Full audit trail via Payment Entry
+
+---
+
+# 🖥️ UI Behavior
+
+* Single button per invoice:
+
+  * 💳 Pay with Paynow (USD)
+  * 💳 Pay with EcoCash (ZWG)
+
+* System automatically:
+
+  * chooses correct gateway
+  * uses correct credentials
+  * handles test/live logic
+
+---
+
+# 🔥 Security Features
+
+* Prevents accidental live payments in test mode
+* Webhook validation
+* Payment duplication protection
+* Strict invoice-state checks
+
+---
+
+# 🛠️ Tech Stack
+
+* Frappe Framework
+* ERPNext (Invoice + Payment Entry)
+* Paynow API
+* EcoCash API
+* Python (backend logic)
+* JavaScript (UI layer)
+
+---
+
+# 🚀 Future Improvements
+
+* Multi-gateway routing engine
+* Support for OneMoney / InnBucks
+* Payment retry system
+* Real-time payment status dashboard
+* Mobile app integration
+
+---
+
+# 📌 Summary
+
+This system is designed to provide a **clean separation of concerns**:
+
+> UI triggers payments
+> Backend processes logic
+> Payment gateways handle money movement
+> Webhooks ensure final reconciliation
+
+ 

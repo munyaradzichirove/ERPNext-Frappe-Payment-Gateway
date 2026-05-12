@@ -98,7 +98,7 @@ function execute_paynow_call(frm, phone, amount) {
     frappe.show_alert({ message: __('Initiating Paynow...'), indicator: 'blue' });
 
     frappe.call({
-        method: "your_app.api.process_paynow_payment", // Change this to your actual python path
+        method: "your_app.api.process_paynow_payment",  
         args: {
             invoice: frm.doc.name,
             phone: phone,
