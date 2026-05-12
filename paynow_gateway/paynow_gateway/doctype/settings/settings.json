@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-05-12 17:35:46.299669",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "return_url",
+  "enabled",
+  "column_break_xpgh",
+  "result_url",
+  "mode",
+  "usd_settings_section",
+  "usd_integration_id",
+  "column_break_jhvu",
+  "usd_integration_key",
+  "section_break_ulny",
+  "zwg_integration_id",
+  "column_break_gcgr",
+  "zwgintegration_key"
+ ],
+ "fields": [
+  {
+   "description": "Where the user is redirected after payment (success/failure page)",
+   "fieldname": "return_url",
+   "fieldtype": "Data",
+   "label": "Return URL"
+  },
+  {
+   "description": "Backend endpoint Paynow calls to confirm payment status",
+   "fieldname": "result_url",
+   "fieldtype": "Data",
+   "label": "Result URL"
+  },
+  {
+   "default": "0",
+   "description": "Backend endpoint Paynow calls to confirm payment status",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "column_break_xpgh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "usd_settings_section",
+   "fieldtype": "Section Break",
+   "label": "USD Settings"
+  },
+  {
+   "description": "Paynow merchant ID used for USD transactions",
+   "fieldname": "usd_integration_id",
+   "fieldtype": "Data",
+   "label": "USD Integration ID"
+  },
+  {
+   "description": "Secret key used to authenticate USD requests",
+   "fieldname": "usd_integration_key",
+   "fieldtype": "Data",
+   "label": "USD Integration Key"
+  },
+  {
+   "fieldname": "column_break_jhvu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Paynow merchant ID used for USD transactions",
+   "fieldname": "zwg_integration_id",
+   "fieldtype": "Data",
+   "label": "ZWG Integration ID  "
+  },
+  {
+   "description": "Secret key used to authenticate USD requests",
+   "fieldname": "zwgintegration_key",
+   "fieldtype": "Data",
+   "label": "ZWG Integration Key  "
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_ulny",
+   "fieldtype": "Section Break",
+   "label": "ZWG Settings"
+  },
+  {
+   "fieldname": "column_break_gcgr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "label": "\ud83d\udd18 Mode (Select)",
+   "options": "Test\nLive"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-05-12 17:59:21.369340",
+ "modified_by": "Administrator",
+ "module": "Paynow Gateway",
+ "name": "Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
