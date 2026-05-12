@@ -2,7 +2,7 @@
 
 # 💳 Payment Gateway (Paynow + EcoCash) – Frappe App
 
-A modular payment gateway system for **ERPNext/Frappe** supporting:
+A modular payment gateway system for ERPNext/Frappe supporting:
 
 * 💵 Paynow (USD payments)
 * 🇿🇼 EcoCash / ZWG mobile money
