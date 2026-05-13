@@ -32,20 +32,37 @@ def process_paynow_payment(invoice, phone, amount):
         settings.result_url or "https://example.com/result"
     )
 
-    payment = paynow.create_payment(f"Inv-{inv_doc.name}","chirovemunyaradzi@gmail.com")
+    payment = paynow.create_payment(f"{inv_doc.name}","chirovemunyaradzi@gmail.com")
     payment.add(f"Payment for Invoice {inv_doc.name}", amount)
     try:
-
         print("DEBUG: Sending Request to Paynow Server...")
         raw_response = paynow.send_mobile(payment, phone, 'ecocash')
         print("DEBUG RESPONSE:", raw_response)
-
         if raw_response.success: 
             poll_url = raw_response.poll_url
             print(f"DEBUG: Response Success. Poll URL: {poll_url}")
             inv_doc.db_set("custom_paynow_poll_url", poll_url)
-            frappe.log_error(f"Paynow Prompt Sent: {inv_doc.name}", "Paynow Info {Success}")
+            frappe.log_error(f"Paynow Prompt Sent: {inv_doc.name}", "Paynow Info Success")
             print("DEBUG: PAYNOW END SUCCESS")
+            from urllib.parse import urlparse, parse_qs
+            parsed = urlparse(poll_url)
+            params = parse_qs(parsed.query)
+            guid = params.get("guid", [None])[0]
+
+            payment_txn = frappe.get_doc({
+                    "doctype": "Paynow Transaction",
+                    "payment_gateway": "Paynow",
+                    "sales_invoice":inv_doc.name,
+                    "amount": amount,
+                    "status": "Initiated",
+                    "phone_number": phone,
+                    "poll_url": poll_url,
+                    "guid": guid
+                    })
+
+            payment_txn.insert(ignore_permissions=True)
+            frappe.db.commit()
+
             return {
                 "status": "success",
                 "message": _("Payment prompt sent to {0}").format(phone),
@@ -79,22 +96,3 @@ def process_paynow_payment(invoice, phone, amount):
 
 
 
-
-def safe_paynow_response(response):
-    if isinstance(response, str):
-        return {
-            "success": False,
-            "error": response
-        }
-
-    if not hasattr(response, "success"):
-        return {
-            "success": False,
-            "error": str(response)
-        }
-
-    return {
-        "success": response.success,
-        "poll_url": getattr(response, "poll_url", None),
-        "error": getattr(response, "error", None)
-    }
