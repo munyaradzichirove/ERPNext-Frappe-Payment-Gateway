@@ -1,7 +1,7 @@
 // Copyright (c) 2026, Munyaradzi Chirove and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("Settings", {
+// frappe.ui.form.on("Paynow Transaction", {
 // 	refresh(frm) {
 
 // 	},

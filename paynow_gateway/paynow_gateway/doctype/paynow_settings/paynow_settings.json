@@ -30,7 +30,9 @@
    "description": "Backend endpoint Paynow calls to confirm payment status",
    "fieldname": "result_url",
    "fieldtype": "Data",
-   "label": "Result URL"
+   "in_list_view": 1,
+   "label": "Result URL",
+   "reqd": 1
   },
   {
    "default": "0",
@@ -98,10 +100,10 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-12 17:59:21.369340",
+ "modified": "2026-05-13 08:19:37.600967",
  "modified_by": "Administrator",
  "module": "Paynow Gateway",
- "name": "Settings",
+ "name": "Paynow Settings",
  "owner": "Administrator",
  "permissions": [
   {

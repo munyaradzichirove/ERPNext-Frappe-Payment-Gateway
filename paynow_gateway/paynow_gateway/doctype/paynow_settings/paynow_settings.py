@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class Settings(Document):
+class PaynowSettings(Document):
 	pass
