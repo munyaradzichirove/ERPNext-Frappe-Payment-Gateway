@@ -17,7 +17,9 @@
   "status",
   "column_break_lzhx",
   "paynow_reference",
-  "poll_url"
+  "poll_url",
+  "logs_section",
+  "log"
  ],
  "fields": [
   {
@@ -74,7 +76,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nInitiated\nPending\nPaid\nFailed\nCancelled\nExpired"
+   "options": "Draft\nInitiated\nPending\nPaid\nFailed\nCancelled\nExpired\nCompleted"
   },
   {
    "fieldname": "column_break_atqj",
@@ -107,13 +109,24 @@
    "fieldname": "guid",
    "fieldtype": "Data",
    "label": "guid"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "logs_section",
+   "fieldtype": "Section Break",
+   "label": "Logs"
+  },
+  {
+   "fieldname": "log",
+   "fieldtype": "Small Text",
+   "label": "log"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-13 16:21:28.673807",
+ "modified": "2026-05-17 16:22:03.934452",
  "modified_by": "Administrator",
  "module": "Paynow Gateway",
  "name": "Paynow Transaction",

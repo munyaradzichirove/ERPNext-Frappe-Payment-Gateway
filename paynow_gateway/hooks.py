@@ -251,3 +251,4 @@ app_license = "mit"
 doctype_js = {
     "Sales Invoice": "public/js/sales_invoice_custom.js"
 }
+after_install = "paynow_gateway.paynow_gatewayh.setup.after_install"

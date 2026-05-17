@@ -12,10 +12,12 @@
   "mode",
   "usd_settings_section",
   "usd_integration_id",
+  "usd_paid_to_account",
   "column_break_jhvu",
   "usd_integration_key",
   "section_break_ulny",
   "zwg_integration_id",
+  "zwg_payment_accout",
   "column_break_gcgr",
   "zwgintegration_key"
  ],
@@ -94,13 +96,27 @@
    "fieldtype": "Select",
    "label": "\ud83d\udd18 Mode (Select)",
    "options": "Test\nLive"
+  },
+  {
+   "default": "0",
+   "fieldname": "usd_paid_to_account",
+   "fieldtype": "Link",
+   "label": "USD Payment Accout",
+   "options": "Account"
+  },
+  {
+   "default": "0",
+   "fieldname": "zwg_payment_accout",
+   "fieldtype": "Link",
+   "label": "ZWG Payment Accout  ",
+   "options": "Account"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-13 08:19:37.600967",
+ "modified": "2026-05-17 16:17:26.641013",
  "modified_by": "Administrator",
  "module": "Paynow Gateway",
  "name": "Paynow Settings",
