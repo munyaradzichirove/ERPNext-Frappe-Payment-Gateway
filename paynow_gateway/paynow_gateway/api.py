@@ -94,8 +94,6 @@ def process_paynow_payment(invoice, phone, amount):
         frappe.log_error(frappe.get_traceback(), "Paynow Integration Error")
         frappe.throw(_("An error occurred while connecting to Paynow. Please check logs."))
 
- 
-
 @frappe.whitelist(allow_guest=True)
 def paynow_webhook():
     frappe.set_user("Administrator")

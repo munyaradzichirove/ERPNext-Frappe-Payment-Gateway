@@ -247,8 +247,17 @@ app_license = "mit"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
-# Add this to your hooks.py
+
 doctype_js = {
     "Sales Invoice": "public/js/sales_invoice_custom.js"
 }
-after_install = "paynow_gateway.paynow_gatewayh.setup.after_install"
+after_install = "paynow_gateway.paynow_gateway.setup.after_install"
+
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["dt", "in", ["Sales Invoice"]]
+        ]
+    }
+]

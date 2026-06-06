@@ -98,14 +98,12 @@
    "options": "Test\nLive"
   },
   {
-   "default": "0",
    "fieldname": "usd_paid_to_account",
    "fieldtype": "Link",
    "label": "USD Payment Accout",
    "options": "Account"
   },
   {
-   "default": "0",
    "fieldname": "zwg_payment_accout",
    "fieldtype": "Link",
    "label": "ZWG Payment Accout  ",
@@ -116,7 +114,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-17 16:17:26.641013",
+ "modified": "2026-05-17 16:32:29.880986",
  "modified_by": "Administrator",
  "module": "Paynow Gateway",
  "name": "Paynow Settings",
