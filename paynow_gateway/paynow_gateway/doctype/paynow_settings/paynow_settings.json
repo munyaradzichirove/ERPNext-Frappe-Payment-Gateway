@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "return_url",
+  "email",
   "enabled",
   "column_break_xpgh",
   "result_url",
@@ -19,7 +20,7 @@
   "zwg_integration_id",
   "zwg_payment_accout",
   "column_break_gcgr",
-  "zwgintegration_key"
+  "zwg_integration_key"
  ],
  "fields": [
   {
@@ -76,12 +77,6 @@
    "label": "ZWG Integration ID  "
   },
   {
-   "description": "Secret key used to authenticate USD requests",
-   "fieldname": "zwgintegration_key",
-   "fieldtype": "Data",
-   "label": "ZWG Integration Key  "
-  },
-  {
    "collapsible": 1,
    "fieldname": "section_break_ulny",
    "fieldtype": "Section Break",
@@ -108,13 +103,26 @@
    "fieldtype": "Link",
    "label": "ZWG Payment Accout  ",
    "options": "Account"
+  },
+  {
+   "description": "Secret key used to authenticate USD requests",
+   "fieldname": "zwg_integration_key",
+   "fieldtype": "Data",
+   "label": "ZWG Integration Key  "
+  },
+  {
+   "description": "Where the user is redirected after payment (success/failure page)",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-17 16:32:29.880986",
+ "modified": "2026-06-08 14:17:03.907073",
  "modified_by": "Administrator",
  "module": "Paynow Gateway",
  "name": "Paynow Settings",

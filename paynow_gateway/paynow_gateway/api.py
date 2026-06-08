@@ -18,8 +18,10 @@ def process_paynow_payment(invoice, phone, amount):
     print(f"DEBUG: Doc Currency: {inv_doc.currency}")
 
     if inv_doc.currency == "USD":
-        integration_id = settings.usd_integration_id
-        integration_key = settings.usd_integration_key
+        # integration_id = settings.usd_integration_id
+        # integration_key = settings.usd_integration_key
+        integration_id = settings.zwg_integration_id
+        integration_key = settings.zwg_integration_key
     elif inv_doc.currency in ["ZiG", "ZWG"]:
         integration_id = settings.zwg_integration_id
         integration_key = settings.zwg_integration_key
@@ -29,11 +31,11 @@ def process_paynow_payment(invoice, phone, amount):
     paynow = Paynow(
         integration_id,
         integration_key,
-        settings.return_url or "https://cfr-physician-chrome-assignments.trycloudflare.com/api/method/paynow_gateway.paynow_gateway.api.paynow_webhook",
-        settings.result_url or "https://cfr-physician-chrome-assignments.trycloudflare.com/api/method/paynow_gateway.paynow_gateway.api.paynow_webhook"
+        settings.return_url,
+        settings.result_url 
     )
 
-    payment = paynow.create_payment(txn_id, "chirovemunyaradzi@gmail.com")
+    payment = paynow.create_payment(txn_id, settings.email)
     payment.add(f"Payment for Invoice {inv_doc.name}", amount)
     try:
         print("DEBUG: Sending Request to Paynow Server...")
