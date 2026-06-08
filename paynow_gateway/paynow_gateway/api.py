@@ -16,7 +16,6 @@ def process_paynow_payment(invoice, phone, amount):
     inv_doc = frappe.get_doc("Sales Invoice", invoice)
     settings = frappe.get_single("Paynow Settings")
     print(f"DEBUG: Doc Currency: {inv_doc.currency}")
-
     if inv_doc.currency == "USD":
         # integration_id = settings.usd_integration_id
         # integration_key = settings.usd_integration_key
@@ -34,7 +33,6 @@ def process_paynow_payment(invoice, phone, amount):
         settings.return_url,
         settings.result_url 
     )
-
     payment = paynow.create_payment(txn_id, settings.email)
     payment.add(f"Payment for Invoice {inv_doc.name}", amount)
     try:
