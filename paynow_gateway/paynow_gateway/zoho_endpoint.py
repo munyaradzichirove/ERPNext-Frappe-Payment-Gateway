@@ -20,24 +20,11 @@ from frappe.utils import now
 # ============================================================
 @frappe.whitelist(allow_guest=True)
 def zoho_trigger_payment():
+    print("=======================invoked===========================")
+    import json
+    data = dict(frappe.local.form_dict or {})
+    print(data)
     frappe.set_user("Administrator")
-
-    # --------------------------------------------------------
-    # STEP 1: Parse incoming POST from Zoho
-    # --------------------------------------------------------
-    try:
-        import json
-        data = dict(frappe.local.form_dict or {})
-
-        # Fallback to raw JSON body if form_dict is empty
-        if not data:
-            raw_body = frappe.request.get_data(as_text=True)
-            data = json.loads(raw_body)
-
-    except Exception as e:
-        frappe.log_error(frappe.get_traceback(), "Zoho Paynow - Request Parse Error")
-        return {"status": "error", "message": "Failed to parse request: " + str(e)}
-
     # --------------------------------------------------------
     # STEP 2: Log the raw received query into Frappe Error Log
     # so we can see exactly what Zoho sent
