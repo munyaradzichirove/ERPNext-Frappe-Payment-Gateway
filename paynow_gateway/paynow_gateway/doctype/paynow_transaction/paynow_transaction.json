@@ -8,6 +8,7 @@
   "section_break_zcqe",
   "amended_from",
   "transaction_id",
+  "payment_gateway",
   "guid",
   "currency",
   "amount",
@@ -15,9 +16,19 @@
   "customer",
   "sales_invoice",
   "status",
+  "phone_number",
+  "payment_entry",
   "column_break_lzhx",
   "paynow_reference",
   "poll_url",
+  "zoho_section",
+  "zoho_invoice_number",
+  "zoho_invoice_id",
+  "zoho_customer_id",
+  "zoho_payment_id",
+  "zoho_sync_status",
+  "zoho_last_sync",
+  "zoho_error",
   "logs_section",
   "log"
  ],
@@ -55,7 +66,7 @@
    "fieldname": "currency",
    "fieldtype": "Select",
    "label": "Currency",
-   "options": "USD\nZWG"
+   "options": "USD\nZWG\nZiG"
   },
   {
    "fieldname": "paynow_reference",
@@ -111,6 +122,23 @@
    "label": "guid"
   },
   {
+   "fieldname": "payment_gateway",
+   "fieldtype": "Data",
+   "label": "Payment Gateway"
+  },
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "label": "Phone Number"
+  },
+  {
+   "fieldname": "payment_entry",
+   "fieldtype": "Link",
+   "label": "Payment Entry",
+   "options": "Payment Entry",
+   "read_only": 1
+  },
+  {
    "collapsible": 1,
    "fieldname": "logs_section",
    "fieldtype": "Section Break",
@@ -120,6 +148,55 @@
    "fieldname": "log",
    "fieldtype": "Small Text",
    "label": "log"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "zoho_section",
+   "fieldtype": "Section Break",
+   "label": "Zoho"
+  },
+  {
+   "fieldname": "zoho_invoice_number",
+   "fieldtype": "Data",
+   "in_filter": 1,
+   "in_global_search": 1,
+   "label": "Zoho Invoice Number"
+  },
+  {
+   "fieldname": "zoho_invoice_id",
+   "fieldtype": "Data",
+   "label": "Zoho Invoice ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "zoho_customer_id",
+   "fieldtype": "Data",
+   "label": "Zoho Customer ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "zoho_payment_id",
+   "fieldtype": "Data",
+   "label": "Zoho Payment ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "zoho_sync_status",
+   "fieldtype": "Select",
+   "label": "Zoho Sync Status",
+   "options": "\nPending\nCompleted\nFailed"
+  },
+  {
+   "fieldname": "zoho_last_sync",
+   "fieldtype": "Datetime",
+   "label": "Zoho Last Sync",
+   "read_only": 1
+  },
+  {
+   "fieldname": "zoho_error",
+   "fieldtype": "Small Text",
+   "label": "Zoho Error",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

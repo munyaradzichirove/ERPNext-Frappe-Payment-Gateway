@@ -3,6 +3,7 @@ from paynow import Paynow
 from frappe import _
 import uuid
 from frappe.utils import now
+from paynow_gateway.paynow_gateway.zoho_client import record_zoho_invoice_payment
 
 @frappe.whitelist()
 def process_paynow_payment(invoice, phone, amount):
@@ -145,9 +146,17 @@ def process_paynow_webhook(data):
         return
 
     txn = frappe.get_doc("Paynow Transaction", txn_name)
+
+    if txn.status == "Completed":
+        print("Already processed, skipping")
+        return
+
     txn.status = status or txn.status
     txn.paynow_reference = paynow_reference or txn.paynow_reference
     txn.poll_url = poll_url or txn.poll_url
+    incoming_invoice_number = data.get("invoice_number") or data.get("invoice")
+    if incoming_invoice_number or not txn.zoho_invoice_number:
+        txn.zoho_invoice_number = incoming_invoice_number or data.get("invoice_id")
 
     txn.log = (txn.log or "") + f"""
         [{frappe.utils.now()}] WEBHOOK UPDATE:
@@ -167,17 +176,26 @@ def handle_paid_transaction(txn, data):
         print("⚠️ Already processed, skipping")
         return
 
-    if data.get("status") != "Paid":
+    if (data.get("status") or "").lower() != "paid":
         return
 
     print("\n💰 PAYMENT CONFIRMED - CREATING PAYMENT ENTRY")
+
+    if txn.zoho_invoice_number:
+        try:
+            record_zoho_invoice_payment(txn, data)
+        except Exception:
+            txn.db_set("zoho_sync_status", "Failed")
+            txn.db_set("zoho_error", frappe.get_traceback())
+            frappe.log_error(frappe.get_traceback(), "Zoho Paynow - Payment Sync Failed")
+            raise
 
     inv = frappe.get_doc("Sales Invoice", txn.sales_invoice)
     settings = frappe.get_single("Paynow Settings")
     if inv.currency == "USD":
         paid_to_account = settings.usd_paid_to_account
     else:
-        paid_to_account = settings.zwg_paid_to_account
+        paid_to_account = settings.zwg_payment_accout
 
     # 🔥 Create Payment Entry
     payment_entry = frappe.get_doc({

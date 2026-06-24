@@ -3,7 +3,7 @@ from paynow import Paynow
 from frappe import _
 import uuid
 from frappe.utils import now
-
+from paynow_gateway.paynow_gateway.zoho_client import record_zoho_invoice_payment
 
 # ============================================================
 # MAIN ENDPOINT — Called by Zoho Billing custom button
@@ -17,7 +17,7 @@ from frappe.utils import now
 #     "currency"     : "USD",
 #     "paynow_number": "0771234567"
 # }
-# ============================================================
+# ==================================================================
 @frappe.whitelist(allow_guest=True)
 def zoho_trigger_payment():
     print("=======================invoked===========================")
@@ -50,7 +50,9 @@ RAW DATA: {data}
     # --------------------------------------------------------
     # STEP 3: Validate required fields
     # --------------------------------------------------------
-    invoice_id    = data.get("invoice_id")
+    invoice_number = data.get("invoice_number") or data.get("invoice")
+    zoho_invoice_id = data.get("invoice_id")
+    invoice_id = invoice_number or zoho_invoice_id
     customer_name = data.get("customer_name")
     amount        = data.get("amount")
     currency      = data.get("currency")
@@ -135,10 +137,14 @@ Raw Data : {raw_response.data}
                 "transaction_id" : txn_id,
                 "payment_gateway": "Paynow",
                 "amount"         : float(amount),
+                "currency"       : currency,
                 "status"         : "Initiated",
                 "phone_number"   : phone,
                 "poll_url"       : poll_url,
                 "guid"           : guid,
+                "zoho_invoice_number": invoice_id,
+                "zoho_invoice_id": zoho_invoice_id if zoho_invoice_id != invoice_id else None,
+                "zoho_sync_status": "Pending",
             })
             payment_txn.insert(ignore_permissions=True)
             frappe.db.commit()
@@ -222,9 +228,17 @@ def process_paynow_webhook(data):
         return
 
     txn                  = frappe.get_doc("Paynow Transaction", txn_name)
+
+    if txn.status == "Completed":
+        print("Already processed, skipping")
+        return
+
     txn.status           = status or txn.status
     txn.paynow_reference = paynow_reference or txn.paynow_reference
     txn.poll_url         = poll_url or txn.poll_url
+    incoming_invoice_number = data.get("invoice_number") or data.get("invoice")
+    if incoming_invoice_number or not txn.zoho_invoice_number:
+        txn.zoho_invoice_number = incoming_invoice_number or data.get("invoice_id")
     txn.log              = (txn.log or "") + f"""
 [{now()}] WEBHOOK UPDATE:
 Status    : {status}
@@ -244,33 +258,53 @@ def handle_paid_transaction(txn, data):
         print("Already processed, skipping")
         return
 
-    if data.get("status") != "Paid":
+    if (data.get("status") or "").lower() != "paid":
         return
 
-    print("PAYMENT CONFIRMED - CREATING PAYMENT ENTRY")
+    print("PAYMENT CONFIRMED")
 
-    settings        = frappe.get_single("Paynow Settings")
-    paid_to_account = settings.zwg_paid_to_account
+    if txn.zoho_invoice_number:
+        try:
+            record_zoho_invoice_payment(txn, data)
+        except Exception:
+            txn.db_set("zoho_sync_status", "Failed")
+            txn.db_set("zoho_error", frappe.get_traceback())
+            frappe.log_error(frappe.get_traceback(), "Zoho Paynow - Payment Sync Failed")
+            raise
 
-    payment_entry = frappe.get_doc({
-        "doctype"          : "Payment Entry",
-        "payment_type"     : "Receive",
-        "party_type"       : "Customer",
-        "paid_amount"      : txn.amount,
-        "received_amount"  : txn.amount,
-        "mode_of_payment"  : "Ecocash",
-        "reference_no"     : txn.paynow_reference or txn.transaction_id,
-        "reference_date"   : now(),
-        "paid_to"          : paid_to_account,
-    })
+    if txn.sales_invoice:
+        print("CREATING ERPNext PAYMENT ENTRY")
 
-    payment_entry.insert(ignore_permissions=True)
-    payment_entry.submit()
+        settings        = frappe.get_single("Paynow Settings")
+        paid_to_account = settings.zwg_payment_accout
 
-    print("Payment Entry Created:", payment_entry.name)
+        inv = frappe.get_doc("Sales Invoice", txn.sales_invoice)
+        payment_entry = frappe.get_doc({
+            "doctype"          : "Payment Entry",
+            "payment_type"     : "Receive",
+            "party_type"       : "Customer",
+            "party"            : inv.customer,
+            "paid_amount"      : txn.amount,
+            "received_amount"  : txn.amount,
+            "mode_of_payment"  : "Ecocash",
+            "reference_no"     : txn.paynow_reference or txn.transaction_id,
+            "reference_date"   : now(),
+            "paid_to"          : paid_to_account,
+        })
+
+        payment_entry.append("references", {
+            "reference_doctype": "Sales Invoice",
+            "reference_name": inv.name,
+            "allocated_amount": txn.amount
+        })
+
+        payment_entry.insert(ignore_permissions=True)
+        payment_entry.submit()
+
+        print("Payment Entry Created:", payment_entry.name)
+        txn.payment_entry = payment_entry.name
 
     txn.status        = "Completed"
-    txn.payment_entry = payment_entry.name
     txn.save(ignore_permissions=True)
 
     frappe.db.commit()
