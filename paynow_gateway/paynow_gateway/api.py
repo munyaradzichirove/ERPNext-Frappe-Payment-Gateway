@@ -9,6 +9,27 @@ from paynow_gateway.paynow_gateway.zoho_client import (
 	record_zoho_invoice_payment,
 )
 
+
+def get_paynow_credentials(settings, currency):
+    currency = (currency or "").strip().upper()
+
+    if currency == "USD":
+        integration_id = settings.usd_integration_id
+        integration_key = settings.usd_integration_key
+        label = "USD"
+    elif currency in {"ZIG", "ZWG"}:
+        integration_id = settings.zwg_integration_id
+        integration_key = settings.zwg_integration_key
+        label = "ZWG"
+    else:
+        frappe.throw(_("Paynow is not configured for currency: {0}").format(currency or _("Unknown")))
+
+    if not integration_id or not integration_key:
+        frappe.throw(_("{0} Paynow credentials are not configured").format(label))
+
+    return integration_id, integration_key
+
+
 @frappe.whitelist()
 def process_paynow_payment(invoice, phone, amount):
     print(f"\n{'='*70}")
@@ -21,17 +42,7 @@ def process_paynow_payment(invoice, phone, amount):
     inv_doc = frappe.get_doc("Sales Invoice", invoice)
     settings = frappe.get_single("Paynow Settings")
     print(f"DEBUG: Doc Currency: {inv_doc.currency}")
-    if inv_doc.currency == "USD":
-        integration_id = settings.usd_integration_id
-        integration_key = settings.usd_integration_key
-        integration_id = settings.zwg_integration_id
-        integration_key = settings.zwg_integration_key
-    elif inv_doc.currency in ["ZiG", "ZWG"]:
-        integration_id = settings.zwg_integration_id
-        integration_key = settings.zwg_integration_key
-    else:
-        print(f"DEBUG ERROR: Currency {inv_doc.currency} not handled")
-        frappe.throw(_("Paynow is not configured for currency: {0}").format(inv_doc.currency))
+    integration_id, integration_key = get_paynow_credentials(settings, inv_doc.currency)
     paynow = Paynow(
         integration_id,
         integration_key,

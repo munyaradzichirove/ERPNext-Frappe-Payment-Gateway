@@ -8,6 +8,7 @@ from paynow_gateway.paynow_gateway.zoho_client import (
 	get_request_data,
 	record_zoho_invoice_payment,
 )
+from paynow_gateway.paynow_gateway.api import get_paynow_credentials
 
 # ============================================================
 # MAIN ENDPOINT — Called by Zoho Billing custom button
@@ -82,17 +83,7 @@ RAW DATA: {data}
 
         print(f"Currency: {currency}")
 
-        # Pick credentials by currency — same logic as original
-        if currency == "USD":
-            integration_id  = settings.zwg_integration_id
-            integration_key = settings.zwg_integration_key
-        elif currency in ["ZiG", "ZWG"]:
-            integration_id  = settings.zwg_integration_id
-            integration_key = settings.zwg_integration_key
-        else:
-            # Default to ZWG if currency unknown
-            integration_id  = settings.zwg_integration_id
-            integration_key = settings.zwg_integration_key
+        integration_id, integration_key = get_paynow_credentials(settings, currency)
 
         # ---- Init Paynow ----
         paynow = Paynow(
