@@ -3,7 +3,11 @@ from paynow import Paynow
 from frappe import _
 import uuid
 from frappe.utils import now
-from paynow_gateway.paynow_gateway.zoho_client import record_zoho_invoice_payment
+from paynow_gateway.paynow_gateway.zoho_client import (
+	extract_zoho_invoice_fields,
+	get_request_data,
+	record_zoho_invoice_payment,
+)
 
 @frappe.whitelist()
 def process_paynow_payment(invoice, phone, amount):
@@ -101,20 +105,7 @@ def paynow_webhook():
 
     print("\n🔥 WEBHOOK RECEIVED")
 
-    # form data
-    form_data = frappe.local.form_dict or {}
-
-    # raw body
-    raw_body = frappe.request.get_data(as_text=True)
-    data = dict(form_data)
-
-    # fallback parser
-    if not data and raw_body:
-        from urllib.parse import parse_qs
-
-        parsed = parse_qs(raw_body)
-
-        data = {k: v[0] for k, v in parsed.items()}
+    data = get_request_data()
 
     print("FINAL DATA:", data)
 
@@ -154,9 +145,11 @@ def process_paynow_webhook(data):
     txn.status = status or txn.status
     txn.paynow_reference = paynow_reference or txn.paynow_reference
     txn.poll_url = poll_url or txn.poll_url
-    incoming_invoice_number = data.get("invoice_number") or data.get("invoice")
+    incoming_invoice_number, incoming_invoice_id = extract_zoho_invoice_fields(data)
     if incoming_invoice_number or not txn.zoho_invoice_number:
-        txn.zoho_invoice_number = incoming_invoice_number or data.get("invoice_id")
+        txn.zoho_invoice_number = incoming_invoice_number
+    if incoming_invoice_id or not txn.zoho_invoice_id:
+        txn.zoho_invoice_id = incoming_invoice_id
 
     txn.log = (txn.log or "") + f"""
         [{frappe.utils.now()}] WEBHOOK UPDATE:
@@ -181,7 +174,7 @@ def handle_paid_transaction(txn, data):
 
     print("\n💰 PAYMENT CONFIRMED - CREATING PAYMENT ENTRY")
 
-    if txn.zoho_invoice_number:
+    if txn.zoho_invoice_number or txn.zoho_invoice_id:
         try:
             record_zoho_invoice_payment(txn, data)
         except Exception:
@@ -189,6 +182,17 @@ def handle_paid_transaction(txn, data):
             txn.db_set("zoho_error", frappe.get_traceback())
             frappe.log_error(frappe.get_traceback(), "Zoho Paynow - Payment Sync Failed")
             raise
+    elif not txn.sales_invoice:
+        txn.db_set("zoho_sync_status", "Failed")
+        txn.db_set("zoho_error", "Missing Zoho invoice_number or invoice_id on paid Paynow webhook")
+        frappe.log_error(str(data), "Zoho Paynow - Missing Invoice Reference")
+        return
+
+    if not txn.sales_invoice:
+        txn.status = "Paid"
+        txn.save(ignore_permissions=True)
+        frappe.db.commit()
+        return
 
     inv = frappe.get_doc("Sales Invoice", txn.sales_invoice)
     settings = frappe.get_single("Paynow Settings")

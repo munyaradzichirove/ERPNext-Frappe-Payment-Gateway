@@ -1,4 +1,5 @@
 import json
+from urllib.parse import parse_qs
 
 import frappe
 import requests
@@ -22,6 +23,74 @@ def _get_password(settings, fieldname):
 
 def _base_url(settings, fieldname, default):
 	return (settings.get(fieldname) or default).rstrip("/")
+
+
+def _coerce_payload(value):
+	if isinstance(value, str):
+		value = value.strip()
+		if not value:
+			return {}
+		try:
+			return json.loads(value)
+		except ValueError:
+			return {}
+	return value if isinstance(value, dict) else {}
+
+
+def get_request_data():
+	data = dict(frappe.local.form_dict or {})
+	raw_body = frappe.request.get_data(as_text=True) if frappe.request else ""
+
+	if raw_body:
+		body_data = _coerce_payload(raw_body)
+		if body_data:
+			data.update(body_data)
+		elif not data:
+			parsed = parse_qs(raw_body)
+			data = {key: value[0] for key, value in parsed.items()}
+
+	for fieldname in ("data", "payload", "invoice"):
+		nested = _coerce_payload(data.get(fieldname))
+		if nested:
+			data.update(nested)
+
+	return data
+
+
+def extract_zoho_invoice_fields(data):
+	data = data or {}
+	invoice_data = data.get("invoice") if isinstance(data.get("invoice"), dict) else {}
+
+	invoice_number = (
+		data.get("invoice_number")
+		or data.get("invoice_no")
+		or data.get("zoho_invoice_number")
+		or invoice_data.get("invoice_number")
+		or invoice_data.get("invoice_no")
+	)
+	invoice_id = (
+		data.get("zoho_invoice_id")
+		or data.get("invoice_id")
+		or invoice_data.get("invoice_id")
+		or invoice_data.get("id")
+	)
+
+	invoice_value = data.get("invoice")
+	if isinstance(invoice_value, str):
+		if invoice_value.upper().startswith("INV-"):
+			invoice_number = invoice_number or invoice_value
+		elif invoice_value.isdigit():
+			invoice_id = invoice_id or invoice_value
+
+	if invoice_number and str(invoice_number).isdigit() and not invoice_id:
+		invoice_id = invoice_number
+		invoice_number = None
+
+	if invoice_id and str(invoice_id).upper().startswith("INV-") and not invoice_number:
+		invoice_number = invoice_id
+		invoice_id = None
+
+	return invoice_number, invoice_id
 
 
 def _token_is_expired(settings):
@@ -126,11 +195,19 @@ def _find_invoice(settings, invoice_number):
 
 
 def record_zoho_invoice_payment(txn, data=None):
-	if not txn.get("zoho_invoice_number"):
+	if not txn.get("zoho_invoice_number") and not txn.get("zoho_invoice_id"):
+		invoice_number, invoice_id = extract_zoho_invoice_fields(data or {})
+		if invoice_number:
+			txn.db_set("zoho_invoice_number", invoice_number)
+		if invoice_id:
+			txn.db_set("zoho_invoice_id", invoice_id)
+
+	invoice_lookup = txn.get("zoho_invoice_number") or txn.get("zoho_invoice_id")
+	if not invoice_lookup:
 		return
 
 	settings = _settings()
-	invoice = _find_invoice(settings, txn.zoho_invoice_number)
+	invoice = _find_invoice(settings, invoice_lookup)
 	real_invoice_id = invoice.get("invoice_id")
 	real_customer_id = invoice.get("customer_id")
 	real_invoice_number = invoice.get("invoice_number")

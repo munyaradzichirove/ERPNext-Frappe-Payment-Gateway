@@ -3,7 +3,11 @@ from paynow import Paynow
 from frappe import _
 import uuid
 from frappe.utils import now
-from paynow_gateway.paynow_gateway.zoho_client import record_zoho_invoice_payment
+from paynow_gateway.paynow_gateway.zoho_client import (
+	extract_zoho_invoice_fields,
+	get_request_data,
+	record_zoho_invoice_payment,
+)
 
 # ============================================================
 # MAIN ENDPOINT — Called by Zoho Billing custom button
@@ -21,8 +25,7 @@ from paynow_gateway.paynow_gateway.zoho_client import record_zoho_invoice_paymen
 @frappe.whitelist(allow_guest=True)
 def zoho_trigger_payment():
     print("=======================invoked===========================")
-    import json
-    data = dict(frappe.local.form_dict or {})
+    data = get_request_data()
     print(data)
     frappe.set_user("Administrator")
     # --------------------------------------------------------
@@ -50,8 +53,7 @@ RAW DATA: {data}
     # --------------------------------------------------------
     # STEP 3: Validate required fields
     # --------------------------------------------------------
-    invoice_number = data.get("invoice_number") or data.get("invoice")
-    zoho_invoice_id = data.get("invoice_id")
+    invoice_number, zoho_invoice_id = extract_zoho_invoice_fields(data)
     invoice_id = invoice_number or zoho_invoice_id
     customer_name = data.get("customer_name")
     amount        = data.get("amount")
@@ -142,8 +144,8 @@ Raw Data : {raw_response.data}
                 "phone_number"   : phone,
                 "poll_url"       : poll_url,
                 "guid"           : guid,
-                "zoho_invoice_number": invoice_id,
-                "zoho_invoice_id": zoho_invoice_id if zoho_invoice_id != invoice_id else None,
+                "zoho_invoice_number": invoice_number,
+                "zoho_invoice_id": zoho_invoice_id,
                 "zoho_sync_status": "Pending",
             })
             payment_txn.insert(ignore_permissions=True)
@@ -188,14 +190,7 @@ def paynow_webhook():
 
     print("\n WEBHOOK RECEIVED")
 
-    form_data = frappe.local.form_dict or {}
-    raw_body  = frappe.request.get_data(as_text=True)
-    data      = dict(form_data)
-
-    if not data and raw_body:
-        from urllib.parse import parse_qs
-        parsed = parse_qs(raw_body)
-        data   = {k: v[0] for k, v in parsed.items()}
+    data = get_request_data()
 
     print("FINAL DATA:", data)
     process_paynow_webhook(data)
@@ -236,9 +231,11 @@ def process_paynow_webhook(data):
     txn.status           = status or txn.status
     txn.paynow_reference = paynow_reference or txn.paynow_reference
     txn.poll_url         = poll_url or txn.poll_url
-    incoming_invoice_number = data.get("invoice_number") or data.get("invoice")
+    incoming_invoice_number, incoming_invoice_id = extract_zoho_invoice_fields(data)
     if incoming_invoice_number or not txn.zoho_invoice_number:
-        txn.zoho_invoice_number = incoming_invoice_number or data.get("invoice_id")
+        txn.zoho_invoice_number = incoming_invoice_number
+    if incoming_invoice_id or not txn.zoho_invoice_id:
+        txn.zoho_invoice_id = incoming_invoice_id
     txn.log              = (txn.log or "") + f"""
 [{now()}] WEBHOOK UPDATE:
 Status    : {status}
@@ -263,7 +260,7 @@ def handle_paid_transaction(txn, data):
 
     print("PAYMENT CONFIRMED")
 
-    if txn.zoho_invoice_number:
+    if txn.zoho_invoice_number or txn.zoho_invoice_id:
         try:
             record_zoho_invoice_payment(txn, data)
         except Exception:
@@ -271,6 +268,11 @@ def handle_paid_transaction(txn, data):
             txn.db_set("zoho_error", frappe.get_traceback())
             frappe.log_error(frappe.get_traceback(), "Zoho Paynow - Payment Sync Failed")
             raise
+    elif not txn.sales_invoice:
+        txn.db_set("zoho_sync_status", "Failed")
+        txn.db_set("zoho_error", "Missing Zoho invoice_number or invoice_id on paid Paynow webhook")
+        frappe.log_error(str(data), "Zoho Paynow - Missing Invoice Reference")
+        return
 
     if txn.sales_invoice:
         print("CREATING ERPNext PAYMENT ENTRY")
