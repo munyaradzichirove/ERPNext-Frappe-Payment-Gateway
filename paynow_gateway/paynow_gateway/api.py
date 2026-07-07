@@ -22,8 +22,8 @@ def process_paynow_payment(invoice, phone, amount):
     settings = frappe.get_single("Paynow Settings")
     print(f"DEBUG: Doc Currency: {inv_doc.currency}")
     if inv_doc.currency == "USD":
-        # integration_id = settings.usd_integration_id
-        # integration_key = settings.usd_integration_key
+        integration_id = settings.usd_integration_id
+        integration_key = settings.usd_integration_key
         integration_id = settings.zwg_integration_id
         integration_key = settings.zwg_integration_key
     elif inv_doc.currency in ["ZiG", "ZWG"]:
